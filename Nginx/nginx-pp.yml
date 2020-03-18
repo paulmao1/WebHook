@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-nginx
+  labels:
+    app: web-nginx
+spec:
+  type: NodePort
+  selector:
+    app: web-nginx
+  ports:
+  - port: 443
+    name: web-nginx-https
+  - port: 80
+    name: web-nginx
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-nginx
+  labels:
+    app: web-nginx
+spec:
+  selector:
+    matchLabels:
+      app: web-nginx
+  template:
+    metadata:
+      labels:
+        app: web-nginx
+    spec:
+      containers:
+      - image: nginx
+        name: web-nginx
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          name: nginx-conf
+          readOnly: true
+        - mountPath: /etc/nginx/certs
+          name: certs
+          readOnly: true
+        ports:
+        - containerPort: 80
+          name: web-nginx
+        - containerPort: 443
+          name: web-nginx-https
+      volumes:
+      - name: nginx-conf
+        configMap: 
+          name: nginx-conf-pp
+      - name: certs
+        secret:
+          secretName: nginx-https
